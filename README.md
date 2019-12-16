@@ -101,6 +101,7 @@ python train.py \
 ## Results
 ### Searching Results
 Top-10 architectures:
+
 | Arch | Params | FLOPs | Prec@1 |
 | --- | :---: | :---: | :---: |
 | [2, 2, 3, 0, 2, 0, 2, 1, 2, 2, 2, 1, 3, 1, 1, 3, 2, 0, 1, 1] | 3.8M | 339M | 62.82% |
