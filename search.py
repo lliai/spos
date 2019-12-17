@@ -17,7 +17,7 @@ from apex.parallel import DistributedDataParallel as DDP
 parser = argparse.ArgumentParser('arch-search')
 parser.add_argument('--distributed', type=bool, default=False, help='distributed mode or not')
 parser.add_argument('--gpu-devices', type=str, default='4, 5, 6, 7', help='chosen gpu devices')
-parser.add_argument('--seed', type=int, default=1234, help='seed')
+parser.add_argument('--seed', type=int, default=1, help='seed')
 parser.add_argument('--num-block-type', type=int, default=4, help='num of block types in each layer')
 parser.add_argument('--num-layer-list', type=list, default=[4, 4, 8, 4], help='layer num list of choice blocks')
 parser.add_argument('--in-channel-list', type=list, default=[16, 64, 160, 320, 640], help='in channel list of choice blocks')
@@ -31,7 +31,7 @@ parser.add_argument('--max-iter', type=int, default=20, help='max iteration in e
 parser.add_argument('--topk', type=int, default=10, help='topk models to be selected in each evolution iteration')
 parser.add_argument('--mut-prob', type=float, default=0.1, help='mutation probability in evolution search')
 
-parser.add_argument('--ckpt-path', type=str, default='exp/20191129-182422/ckpt_ep119.pth.tar', help='path to checkpoint')
+parser.add_argument('--ckpt-path', type=str, default='', help='path to checkpoint')
 parser.add_argument('--history-path', type=str, default='', help='path to search history file')
 parser.add_argument('--exp-dir', type=str, default='search_exp', help='experiment directory')
 parser.add_argument('--train-path', type=str, default='./supernet_train_data.csv', help='path to train dataset')

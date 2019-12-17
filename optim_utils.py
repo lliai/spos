@@ -47,6 +47,7 @@ def create_scheduler(optimizer, args):
     if args.scheduler == 'constant':
         return torch.optim.lr_scheduler.LambdaLR(optimizer, lambda _: 1)
     elif args.scheduler == 'step':
-        return torch.optim.lr_scheduler.LambdaLR(optimizer, lambda step: (1.0 - step / args.num_sched_iters))
+        return torch.optim.lr_scheduler.LambdaLR(
+            optimizer, lambda step: (1.0 - step / args.num_sched_iters) if step < args.num_sched_iters else 0)
     elif args.scheduler == 'cosine':
         return torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, args.num_sched_iters, args.min_lr)

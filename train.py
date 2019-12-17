@@ -31,9 +31,9 @@ parser.add_argument('--keep-num', type=int, default=10, help='max ckpt num to ke
 parser.add_argument('--crop-size', type=int, default=224, help='crop size of input images')
 parser.add_argument('--batch-size', type=int, default=200, help='batch size')
 parser.add_argument('--lr', type=float, default=0.5, help='initial learning rate')
-parser.add_argument('--min-lr', type=float, default=1e-3, help='minimal learning rate')
+parser.add_argument('--min-lr', type=float, default=0, help='minimal learning rate')
 parser.add_argument('--optimizer', type=str, default='sgd', help='optimizer')
-parser.add_argument('--scheduler', type=str, default='cosine', help='scheduler')
+parser.add_argument('--scheduler', type=str, default='step', help='scheduler')
 parser.add_argument('--num-classes', type=int, default=1000, help='number of training classes')
 parser.add_argument('--momentum', type=float, default=0.9, help='momentum')
 parser.add_argument('--weight-decay', type=float, default=4e-5, help='weight decay')
@@ -42,8 +42,8 @@ parser.add_argument('--label-smooth', type=float, default=0.1, help='label smoot
 parser.add_argument('--exp-dir', type=str, default='train_exp', help='experiment directory')
 parser.add_argument('--resume-path', type=str, default='', help='path to resume checkpoint')
 parser.add_argument('--save-dir', type=str, default='checkpoints', help='directory to save checkpoints')
-parser.add_argument('--train-path', type=str, default='/home/wangguangrun/ILSVRC2012/train', help='path to train dataset')
-parser.add_argument('--val-path', type=str, default='/home/wangguangrun/ILSVRC2012/val', help='path to val dataset')
+parser.add_argument('--train-path', type=str, default='ILSVRC2012/train', help='path to train dataset')
+parser.add_argument('--val-path', type=str, default='ILSVRC2012/val', help='path to val dataset')
 parser.add_argument('--local_rank', type=int, default=0, help='DDP local rank')
 parser.add_argument('--world_size', type=int, default=1, help='DDP world size')
 args = parser.parse_args()
@@ -98,7 +98,7 @@ def main():
             checkpoint = torch.load(args.resume_path, map_location='cpu')
             model.load_state_dict(checkpoint['state_dict'])
             optimizer.load_state_dict(checkpoint['optimizer'])
-            # scheduler.load_state_dict(checkpoint['scheduler'])
+            scheduler.load_state_dict(checkpoint['scheduler'])
 
             args.start_epoch = checkpoint['epoch']
             if args.local_rank == 0:
