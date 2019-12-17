@@ -114,7 +114,7 @@ def main():
 
     if args.eval_only:
         try:
-            arch = [0 for _ in range(sum(args.num_layer_list))]
+            arch = [0] * sum(args.num_layer_list)
 
             if args.local_rank == 0:
                 logging.info('-' * 40)

@@ -23,7 +23,7 @@ parser.add_argument('--num-layer-list', type=list, default=[4, 4, 8, 4], help='l
 parser.add_argument('--best-arch', type=list, default=[2, 2, 3, 0, 2, 0, 2, 1, 2, 2, 2, 1, 3, 1, 1, 3, 2, 0, 1, 1], help='best architecture')
 
 parser.add_argument('--start-epoch', type=int, default=0, help='start epoch')
-parser.add_argument('--total-epochs', type=int, default=240, help='total epochs')
+parser.add_argument('--total-epochs', type=int, default=360, help='total epochs')
 parser.add_argument('--disp-freq', type=int, default=50, help='display frequency')
 parser.add_argument('--val-freq', type=int, default=1, help='validate frequency')
 parser.add_argument('--keep-num', type=int, default=10, help='max ckpt num to keep')
@@ -111,7 +111,7 @@ def main():
 
     if args.eval_only:
         try:
-            arch = [0 for _ in range(sum(args.num_layer_list))]
+            arch = [0] * sum(args.num_layer_list)
 
             if args.local_rank == 0:
                 logging.info('-' * 40)

@@ -10,7 +10,7 @@ The choice block structure, data augmentation strategy, learning rate schedule, 
 | Best subnet| [ckpt_ep359.pth.tar](https://drive.google.com/open?id=18Rfn5ve6hUssHQ98vhOiViR9cadPAUf2) |
 
 ## Environments
-`python == 3.7.3 pytorch == 1.2.0 cuda == 10.1`
+`python == 3.7.3 pytorch == 1.2.0 cuda == 10.1; pip install apex`
 
 ## Usage 
 ### Dataset Preparation
@@ -25,7 +25,7 @@ python data_split.py \
 Then all the absolute paths of the split training dataset and val dataset will be saved into csv files.
 
 ### Supernet Training
-If training in distributed mode, you should first install NVIDIA apex by `pip install apex`, then run:  
+If training in distributed mode, then run:  
 ```shell
 sh distributed_supernet_train.sh NUM_GPU \
 --distributed=True \

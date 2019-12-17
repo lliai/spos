@@ -104,7 +104,6 @@ def evolution_search(model, val_loader, bn_loader, use_gpu):
 
     num_crossover = args.pop_size // 2
     num_mutation = args.pop_size // 2
-    # pop = [[random.randint(0, args.num_block_type - 1) for _ in range(sum(args.num_layer_list))] for _ in range(args.pop_size)]
     pop = []
     while len(pop) < args.pop_size:
         pop_gen = [random.randint(0, args.num_block_type - 1) for _ in range(sum(args.num_layer_list))]
