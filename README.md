@@ -10,7 +10,10 @@ The choice block structure, data augmentation strategy, learning rate schedule, 
 | Best subnet| [ckpt_ep359.pth.tar](https://drive.google.com/open?id=18Rfn5ve6hUssHQ98vhOiViR9cadPAUf2) |
 
 ## Environments
-`python == 3.7.3 pytorch == 1.2.0 cuda == 10.1; pip install apex`
+`python == 3.7.3 pytorch == 1.2.0 cuda == 10.1`
+```shell 
+pip install apex
+```
 
 ## Usage 
 ### Dataset Preparation
