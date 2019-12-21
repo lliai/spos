@@ -15,6 +15,9 @@ python == 3.7.3 pytorch == 1.2.0 cuda == 10.1
 pip install apex
 ```
 
+## TODO
+Add FLOPS constraint during supernet-training and searching, finetune the hyperparameters of best-subnet-training with more experiments.
+
 ## Usage 
 ### Dataset Preparation
 Split the original imagenet training set into two parts: 50000 images for validation (50 images for each class exactly) and the rest as the training set by running: 
