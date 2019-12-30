@@ -4,10 +4,10 @@ import csv
 import argparse
 
 
-parser = argparse.ArgumentParser('data-split')
-parser.add_argument('--data-dir', type=str, default='ILSVRC2012/train', help='path to the original training dataset')
-parser.add_argument('--train-save-path', type=str, default='./supernet_train_data.csv', help='path to save the split training dataset')
-parser.add_argument('--val-save-path', type=str, default='./supernet_val_data.csv', help='path to save the split validate dataset')
+parser = argparse.ArgumentParser()
+parser.add_argument('--data-dir', type=str, default='./ILSVRC2012/train', help='path to the original train dataset')
+parser.add_argument('--train-save-path', type=str, default='./supernet_train_data.csv', help='path to save the split train dataset')
+parser.add_argument('--val-save-path', type=str, default='./supernet_val_data.csv', help='path to save the split val dataset')
 args = parser.parse_args()
 
 

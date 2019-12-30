@@ -88,9 +88,9 @@ class ChoiceBlockX(nn.Module):
             mid_ch = out_channels // 2
 
         self.branch1 = nn.Sequential(
-            DWConvBlock(in_ch, in_ch, ksize, 1, padding=ksize // 2),
+            DWConvBlock(in_ch, in_ch, ksize, stride, padding=ksize // 2),
             ConvBlock(in_ch, mid_ch, 1, 1, padding=0),
-            DWConvBlock(mid_ch, mid_ch, ksize, stride, padding=ksize // 2),
+            DWConvBlock(mid_ch, mid_ch, ksize, 1, padding=ksize // 2),
             ConvBlock(mid_ch, mid_ch, 1, 1, padding=0),
             DWConvBlock(mid_ch, mid_ch, ksize, 1, padding=ksize // 2),
             ConvBlock(mid_ch, out_ch, 1, 1, padding=0),

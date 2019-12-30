@@ -1,6 +1,3 @@
 .idea
-*_exp
-*.csv
-_test.py
-.pyc
-__pycache__
+_test*
+__pycache__/
