@@ -4,13 +4,13 @@ from .choice_block import ChoiceBlock, ChoiceBlockX, ConvBlock
 
 def select_block(in_channels, out_channels, id, stride):
     if id == 0:
-        return ChoiceBlock(in_channels, out_channels, 3, stride)
+        return ChoiceBlock(in_channels, out_channels, kernel_size=3, stride=stride)
     elif id == 1:
-        return ChoiceBlock(in_channels, out_channels, 5, stride)
+        return ChoiceBlock(in_channels, out_channels, kernel_size=5, stride=stride)
     elif id == 2:
-        return ChoiceBlock(in_channels, out_channels, 7, stride)
+        return ChoiceBlock(in_channels, out_channels, kernel_size=7, stride=stride)
     else:
-        return ChoiceBlockX(in_channels, out_channels, 3, stride)
+        return ChoiceBlockX(in_channels, out_channels, kernel_size=3, stride=stride)
 
 
 def create_blocks(in_channel_list, num_layer_list, arch):
@@ -47,9 +47,9 @@ class SPOS(nn.Module):
         img_channels = 3
         out_channels = 1024
 
-        self.conv1 = ConvBlock(img_channels, in_channel_list[0], 3, 2, padding=1)
+        self.conv1 = ConvBlock(img_channels, in_channel_list[0], kernel_size=3, stride=2, padding=1)
         self.choice_blocks = create_blocks(in_channel_list, num_layer_list, arch)
-        self.conv2 = ConvBlock(in_channel_list[-1], out_channels, 1, 1, padding=0)
+        self.conv2 = ConvBlock(in_channel_list[-1], out_channels, kernel_size=1)
         self.global_avgpool = nn.AvgPool2d(7)
         self.fc = nn.Linear(out_channels, num_classes)
 
@@ -90,9 +90,9 @@ class SPOS_Supernet(nn.Module):
         img_channels = 3
         out_channels = 1024
 
-        self.conv1 = ConvBlock(img_channels, in_channel_list[0], ksize=3, stride=2, padding=1)
+        self.conv1 = ConvBlock(img_channels, in_channel_list[0], kernel_size=3, stride=2, padding=1)
         self.choice_blocks = create_supernet_blocks(in_channel_list, num_layer_list, num_block_type)
-        self.conv2 = ConvBlock(in_channel_list[-1], out_channels, ksize=1, stride=1, padding=0)
+        self.conv2 = ConvBlock(in_channel_list[-1], out_channels, kernel_size=1)
         self.global_avgpool = nn.AvgPool2d(7)
         self.fc = nn.Linear(out_channels, num_classes)
 

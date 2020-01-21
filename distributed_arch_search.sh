@@ -1,4 +1,4 @@
 #!/bin/bash
 NUM_PROC=$1
 shift
-python -m torch.distributed.launch --nproc_per_node=$NUM_PROC arch_search.py --distributed=True "$@"
+python -m torch.distributed.launch --nproc_per_node=$NUM_PROC arch_search.py --distributed "$@"

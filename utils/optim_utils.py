@@ -19,24 +19,30 @@ class CrossEntropyLabelSmooth(nn.Module):
         return loss
 
 
-def get_parameters(model):
-    group_no_weight_decay = []
-    group_weight_decay = []
-    for pname, p in model.named_parameters():
-        if pname.find('weight') >= 0 and len(p.size()) > 1:
-            group_weight_decay.append(p)
+def add_weight_decay(model, weight_decay=1e-5, skip_list=()):
+    decay = []
+    no_decay = []
+    for name, param in model.named_parameters():
+        if not param.requires_grad:
+            continue  # frozen weights
+        if len(param.shape) == 1 or name.endswith(".bias") or name in skip_list:
+            no_decay.append(param)
         else:
-            group_no_weight_decay.append(p)
-    assert len(list(model.parameters())) == len(group_weight_decay) + len(group_no_weight_decay)
-    groups = [dict(params=group_weight_decay), dict(params=group_no_weight_decay, weight_decay=0.)]
-    return groups
+            decay.append(param)
+    return [
+        {'params': no_decay, 'weight_decay': 0.},
+        {'params': decay, 'weight_decay': weight_decay}]
 
 
 def create_optimizer(model, optim_type, lr, weight_decay, momentum=0.9):
-    assert optim_type in ['sgd']
+    assert optim_type in ['sgd', 'adam']
+
+    parameters = add_weight_decay(model, weight_decay)
 
     if optim_type == 'sgd':
-        return torch.optim.SGD(get_parameters(model), lr=lr, momentum=momentum, weight_decay=weight_decay)
+        return torch.optim.SGD(parameters, lr=lr, momentum=momentum)
+    elif optim_type == 'adam':
+        return torch.optim.Adam(parameters, lr=lr)
 
 
 def create_criterion(num_classes, label_smooth=0):
@@ -54,13 +60,12 @@ def create_scheduler(optimizer, sched_type, total_steps, warmup_steps=0, num_cyc
             if cur_step < warmup_steps:
                 return float(cur_step) / float(max(1, warmup_steps))
             return max(0.0, float(total_steps - cur_step) / float(max(1, total_steps - warmup_steps)))
-
         return LambdaLR(optimizer, lr_lambda, last_epoch)
+
     elif sched_type == 'cosine':
         def lr_lambda(current_step):
             if current_step < warmup_steps:
                 return float(current_step) / float(max(1, warmup_steps))
             progress = float(current_step - warmup_steps) / float(max(1, total_steps - warmup_steps))
             return max(0., 0.5 * (1. + math.cos(math.pi * float(num_cycles) * 2. * progress)))
-
         return LambdaLR(optimizer, lr_lambda, last_epoch)

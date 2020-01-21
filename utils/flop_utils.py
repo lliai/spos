@@ -1,15 +1,8 @@
 import torch
 import torch.nn as nn
+import models
 from thop import profile
 from thop.count_hooks import zero_ops
-from models import ConvBlock, create_supernet_blocks
-
-
-def count_flops(model, inputs):
-    if not isinstance(inputs, tuple):
-        inputs = (inputs, )
-    flops, params = profile(model, inputs=inputs, custom_ops={nn.BatchNorm2d: zero_ops}, verbose=False)
-    return flops
 
 
 class SPOS_Supernet_FLOPs(nn.Module):
@@ -20,9 +13,9 @@ class SPOS_Supernet_FLOPs(nn.Module):
         self.in_channel_list = in_channel_list
         self.img_size = [112, 56, 28, 14, 7]
 
-        self.conv1 = ConvBlock(img_channels, in_channel_list[0], ksize=3, stride=2, padding=1)
-        self.choice_blocks = create_supernet_blocks(in_channel_list, num_layer_list, num_block_type)
-        self.conv2 = ConvBlock(in_channel_list[-1], out_channels, ksize=1, stride=1, padding=0)
+        self.conv1 = models.ConvBlock(img_channels, in_channel_list[0], kernel_size=3, stride=2, padding=1)
+        self.choice_blocks = models.create_supernet_blocks(in_channel_list, num_layer_list, num_block_type)
+        self.conv2 = models.ConvBlock(in_channel_list[-1], out_channels, kernel_size=1, stride=1, padding=0)
         self.global_avgpool = nn.AvgPool2d(7)
         self.fc = nn.Linear(out_channels, num_classes)
 
@@ -38,6 +31,13 @@ class SPOS_Supernet_FLOPs(nn.Module):
         else:
             layer_idx, block_idx = idx
             return self.choice_blocks[layer_idx][block_idx](x)
+
+
+def count_flops(model, inputs):
+    if not isinstance(inputs, tuple):
+        inputs = (inputs, )
+    flops, params = profile(model, inputs=inputs, custom_ops={nn.BatchNorm2d: zero_ops}, verbose=False)
+    return flops
 
 
 def write_flops(save_path):

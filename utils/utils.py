@@ -100,7 +100,7 @@ def uniform_constraint_sampling(num_layers, num_candidates, flop_table, local_ra
     flops = get_flops(arch, flop_table) / 1e6
     if not sampled_scope[0] <= flops <= sampled_scope[1]:
         cnt = 0
-        timeout = 1
+        timeout = 500
         while cnt < timeout:
             arch = [random.randint(0, num_candidates - 1) for _ in range(num_layers)]
             flops = get_flops(arch, flop_table) / 1e6
@@ -109,8 +109,8 @@ def uniform_constraint_sampling(num_layers, num_candidates, flop_table, local_ra
                 return arch, flops
 
         if local_rank == 0:
-            logging.info('Sample FLOPs timeout, expected FLOPs scope [{}, {}]M, sampled FLOPs {:.2f}M'.format(
-                sampled_scope[0], sampled_scope[1], flops))
+            print('FLOPs sampling timeout, expected: {}-{}M, sampled: {:.2f}M'
+                  .format(sampled_scope[0], sampled_scope[1], flops))
 
     return arch, flops
 

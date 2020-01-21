@@ -12,10 +12,10 @@ def shuffle_channels(x, group):
 
 
 class ConvBlock(nn.Module):
-    def __init__(self, in_channels, out_channels, ksize, stride, padding):
+    def __init__(self, in_channels, out_channels, kernel_size, stride=1, padding=0):
         super(ConvBlock, self).__init__()
 
-        self.conv = nn.Conv2d(in_channels, out_channels, ksize, stride, padding, bias=False)
+        self.conv = nn.Conv2d(in_channels, out_channels, kernel_size, stride, padding, bias=False)
         self.bn = nn.BatchNorm2d(out_channels, affine=False)
         self.relu = nn.ReLU(inplace=True)
 
@@ -23,12 +23,11 @@ class ConvBlock(nn.Module):
         return self.relu(self.bn(self.conv(x)))
 
 
-class DWConvBlock(nn.Module):
-    def __init__(self, in_channels, out_channels, ksize, stride, padding):
-        super(DWConvBlock, self).__init__()
+class DepthwiseConvBlock(nn.Module):
+    def __init__(self, in_channels, out_channels, kernel_size, stride=1, padding=0):
+        super(DepthwiseConvBlock, self).__init__()
 
-        self.conv = nn.Conv2d(in_channels, out_channels, ksize, stride,
-                              padding, groups=in_channels, bias=False)
+        self.conv = nn.Conv2d(in_channels, out_channels, kernel_size, stride, padding, groups=in_channels, bias=False)
         self.bn = nn.BatchNorm2d(out_channels, affine=False)
 
     def forward(self, x):
@@ -36,7 +35,7 @@ class DWConvBlock(nn.Module):
 
 
 class ChoiceBlock(nn.Module):
-    def __init__(self, in_channels, out_channels, ksize, stride):
+    def __init__(self, in_channels, out_channels, kernel_size, stride):
         super(ChoiceBlock, self).__init__()
         self.stride = stride
 
@@ -50,13 +49,13 @@ class ChoiceBlock(nn.Module):
             mid_ch = out_channels // 2
 
         self.branch1 = nn.Sequential(
-            ConvBlock(in_ch, mid_ch, 1, 1, padding=0),
-            DWConvBlock(mid_ch, mid_ch, ksize, stride, padding=ksize // 2),
-            ConvBlock(mid_ch, out_ch, 1, 1, padding=0),
+            ConvBlock(in_ch, mid_ch, kernel_size=1),
+            DepthwiseConvBlock(mid_ch, mid_ch, kernel_size, stride, padding=kernel_size // 2),
+            ConvBlock(mid_ch, out_ch, kernel_size=1),
         )
         self.branch2 = nn.Sequential(
-            DWConvBlock(in_ch, in_ch, ksize, stride, padding=ksize // 2),
-            ConvBlock(in_ch, in_ch, 1, 1, padding=0),
+            DepthwiseConvBlock(in_ch, in_ch, kernel_size, stride, padding=kernel_size // 2),
+            ConvBlock(in_ch, in_ch, kernel_size=1),
         )
 
     def forward(self, x):
@@ -74,7 +73,7 @@ class ChoiceBlock(nn.Module):
 
 
 class ChoiceBlockX(nn.Module):
-    def __init__(self, in_channels, out_channels, ksize, stride):
+    def __init__(self, in_channels, out_channels, kernel_size, stride):
         super(ChoiceBlockX, self).__init__()
         self.stride = stride
 
@@ -88,16 +87,16 @@ class ChoiceBlockX(nn.Module):
             mid_ch = out_channels // 2
 
         self.branch1 = nn.Sequential(
-            DWConvBlock(in_ch, in_ch, ksize, stride, padding=ksize // 2),
-            ConvBlock(in_ch, mid_ch, 1, 1, padding=0),
-            DWConvBlock(mid_ch, mid_ch, ksize, 1, padding=ksize // 2),
-            ConvBlock(mid_ch, mid_ch, 1, 1, padding=0),
-            DWConvBlock(mid_ch, mid_ch, ksize, 1, padding=ksize // 2),
-            ConvBlock(mid_ch, out_ch, 1, 1, padding=0),
+            DepthwiseConvBlock(in_ch, in_ch, kernel_size, stride, padding=kernel_size // 2),
+            ConvBlock(in_ch, mid_ch, kernel_size=1),
+            DepthwiseConvBlock(mid_ch, mid_ch, kernel_size, padding=kernel_size // 2),
+            ConvBlock(mid_ch, mid_ch, kernel_size=1),
+            DepthwiseConvBlock(mid_ch, mid_ch, kernel_size, padding=kernel_size // 2),
+            ConvBlock(mid_ch, out_ch, kernel_size=1),
         )
         self.branch2 = nn.Sequential(
-            DWConvBlock(in_ch, in_ch, ksize, stride, padding=ksize // 2),
-            ConvBlock(in_ch, in_ch, 1, 1, padding=0),
+            DepthwiseConvBlock(in_ch, in_ch, kernel_size, stride, padding=kernel_size // 2),
+            ConvBlock(in_ch, in_ch, kernel_size=1),
         )
 
     def forward(self, x):

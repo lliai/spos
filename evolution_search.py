@@ -6,11 +6,10 @@ import datetime
 import random
 import logging
 from copy import deepcopy
-from .utils import AverageMeter, accuracy, recalc_bn, reduce_tensor, save_search_history, get_flops
+from utils import AverageMeter, accuracy, recalc_bn, reduce_tensor, save_search_history, get_flops
 
 
 def evolution_search(model, val_loader, bn_loader, use_gpu, args):
-    inf_time = 0
     total_topk_pop, total_topk_prec1, total_topk_prec5, total_topk_flops = [], [], [], []
     st_time = time.time()
 
@@ -20,14 +19,15 @@ def evolution_search(model, val_loader, bn_loader, use_gpu, args):
     evaluated_pop = []
     while len(pop) < args.pop_size:
         pop_gen = [random.randint(0, args.num_block_type - 1) for _ in range(sum(args.num_layer_list))]
-        if pop_gen not in pop:
+        flops = get_flops(pop_gen, args.flop_table) / 1e6
+        if pop_gen not in pop and flops <= args.max_flops:
             pop.append(pop_gen)
     evaluated_pop.extend(pop)
 
     if args.history_path:
         if os.path.isfile(args.history_path):
             history = torch.load(args.history_path)
-            args.start_iter = history['iter'] + 1
+            args.start_search_iter = history['iter'] + 1
             pop = history['pop']
             evaluated_pop = history['evaluated_pop']
             total_topk_pop = history['topk_pop']
@@ -36,7 +36,7 @@ def evolution_search(model, val_loader, bn_loader, use_gpu, args):
             total_topk_flops = history['topk_flops']
             if args.local_rank == 0:
                 logging.info('Loaded evolved population from \'{}\''.format(args.history_path))
-                logging.info('Start iter: {}'.format(args.start_iter))
+                logging.info('Start iter: {}'.format(args.start_search_iter))
         else:
             if args.local_rank == 0:
                 logging.info('No history file found in \'{}\''.format(args.history_path))
@@ -45,9 +45,7 @@ def evolution_search(model, val_loader, bn_loader, use_gpu, args):
         logging.info('==> Start evolution search')
     raw_params = deepcopy(model.state_dict())
 
-    for itr in range(args.start_iter, args.max_iter + 1):
-        st_inf_time = time.time()
-
+    for itr in range(args.start_search_iter, args.total_search_iters + 1):
         all_prec1, all_prec5, all_flops = [], [], []
         for idx, arch in enumerate(pop):
             recalc_bn(model, arch, bn_loader, use_gpu, args.bn_recalc_imgs, args.world_size)
@@ -56,10 +54,6 @@ def evolution_search(model, val_loader, bn_loader, use_gpu, args):
             all_prec1.append(prec1)
             all_prec5.append(prec5)
             all_flops.append(flops)
-
-        if use_gpu:
-            torch.cuda.synchronize()
-        inf_time += round(time.time() - st_inf_time)
 
         topk_idx = np.argsort(all_prec1)[::-1][:args.topk]
         topk_pop = np.array(pop)[topk_idx].tolist()
@@ -78,22 +72,6 @@ def evolution_search(model, val_loader, bn_loader, use_gpu, args):
         total_topk_prec5 = np.array(total_topk_prec5)[total_topk_idx].tolist()
         total_topk_flops = np.array(total_topk_flops)[total_topk_idx].tolist()
 
-        # Remove duplicated architectures considering previous iterations
-        # temp_arch, temp_prec1 = [], []
-        # for idx in total_topk_idx:
-        #     if len(temp_arch) >= args.topk:
-        #         break
-        #     if total_topk_pop[idx] not in temp_arch:
-        #         temp_arch.append(total_topk_pop[idx])
-        #         temp_prec1.append(total_topk_prec1[idx])
-        # if len(temp_arch) < args.topk:
-        #     top_idx = total_topk_idx[0]
-        #     for _ in range(args.topk - len(temp_arch)):
-        #         temp_arch.append(total_topk_pop[top_idx])
-        #         temp_prec1.append(total_topk_prec1[top_idx])
-        #
-        # total_topk_pop, total_topk_prec1 = temp_arch, temp_prec1
-
         new_pop1 = crossover(total_topk_pop, num_crossover, evaluated_pop, args)
         evaluated_pop.extend(new_pop1)
         new_pop2 = mutation(total_topk_pop, num_mutation, evaluated_pop, args.mut_prob, args.num_block_type, args)
@@ -105,7 +83,7 @@ def evolution_search(model, val_loader, bn_loader, use_gpu, args):
 
         if args.local_rank == 0:
             logging.info('-' * 40)
-            logging.info('Results')
+            logging.info('Topk architectures:')
             for arch, flops, prec1, prec5 in zip(total_topk_pop, total_topk_flops, total_topk_prec1, total_topk_prec5):
                 logging.info('Arch: {}\t'
                              'FLOPs: {:.2f}M\t'
@@ -126,9 +104,8 @@ def evolution_search(model, val_loader, bn_loader, use_gpu, args):
 
     elapsed = round(time.time() - st_time)
     elapsed = str(datetime.timedelta(seconds=elapsed))
-    inf_time = str(datetime.timedelta(seconds=inf_time))
     if args.local_rank == 0:
-        logging.info('Finished, total elapsed time (h:m:s): {}, inference time (h:m:s): {}'.format(elapsed, inf_time))
+        logging.info('Finished, total inference time (h:m:s): {}'.format(elapsed))
 
 
 def inference(model, itr, pop_idx, arch, val_loader, use_gpu, args):
@@ -151,14 +128,14 @@ def inference(model, itr, pop_idx, arch, val_loader, use_gpu, args):
             all_prec1.update(prec1.item(), img.size(0))
             all_prec5.update(prec5.item(), img.size(0))
 
-        flops = get_flops(arch, args.flop_table)
+        flops = get_flops(arch, args.flop_table) / 1e6
         if args.local_rank == 0:
             logging.info('Iter: [{}/{}][{}/{}]\t'
                          'Arch: {}\t'
                          'FLOPs: {:.2f}M\t'
                          'Prec@1: {:.2f}%\t'
-                         'Prec&5: {:.2f}%'
-                         .format(itr, args.max_iter, pop_idx + 1, args.pop_size, arch,
+                         'Prec@5: {:.2f}%'
+                         .format(itr, args.total_search_iters, pop_idx + 1, args.pop_size, arch,
                                  flops, all_prec1.avg, all_prec5.avg))
 
     return all_prec1.avg, all_prec5.avg, flops
@@ -198,7 +175,7 @@ def mutation(raw_pop, num_pop, evaluated_pop, mut_prob, num_candidates, args):
                 choices = [i for i in range(num_candidates) if i != pop[id][l]]
                 pop[id][l] = random.sample(choices, 1)[0]
 
-        flops = get_flops(pop[id], args.flop_table)
+        flops = get_flops(pop[id], args.flop_table) / 1e6
         if flops <= args.max_flops and pop[id] not in new_pop and pop[id] not in evaluated_pop:
             new_pop.append(pop[id])
 
